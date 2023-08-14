@@ -1,29 +1,24 @@
-﻿using User.Application.Contracts.Persistence;
-using User.Application.Features.Users.Command.DeleteRole;
-using User.Application.Features.Users.Command.DeleteUser;
-using User.Application.Features.Users.Command.InserRole;
-using User.Application.Features.Users.Command.InsertUser;
-using User.Application.Features.Users.Command.UpdateRole;
-using User.Application.Features.Users.Command.UpdateUser;
-using User.Application.Features.Users.Queries.GetUserList;
-using User.Domain.Entities;
-using User.Domain.ViewModel;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace User.Application.Services
 {
     public class UserService : IUserService
     {
 
-        private readonly IAsyncRepository<Userr> _userAsyncRepository;
-        private readonly IAsyncRepository<Role> _roleAsyncRepository;
+        private readonly Infrastructure.Repository.IAsyncRepository<Userr> _userAsyncRepository;
+        private readonly Infrastructure.Repository.IAsyncRepository<Role> _roleAsyncRepository;
+        private readonly Infrastructure.Repository.IAsyncRepository<Appointment> _appointmentAsyncRepository;
+        private readonly Infrastructure.Repository.IAsyncRepository<Department> _deptAsyncRepository;
+        private readonly ASPUserDbContext _userDbContext;
 
-        public UserService(IAsyncRepository<Userr> userAsyncRepository, IAsyncRepository<Role> roleAsyncRepository)
+        public UserService(Infrastructure.Repository.IAsyncRepository<Userr> userAsyncRepository, Infrastructure.Repository.IAsyncRepository<Appointment> appointmentAsyncRepository, Infrastructure.Repository.IAsyncRepository<Department> deptAsyncRepository, ASPUserDbContext userDbContext, Infrastructure.Repository.IAsyncRepository<Role> roleAsyncRepository)
         {
             _userAsyncRepository = userAsyncRepository ?? throw new ArgumentNullException(nameof(userAsyncRepository));
-            _roleAsyncRepository = roleAsyncRepository;
+            _roleAsyncRepository = roleAsyncRepository ?? throw new ArgumentNullException(nameof(roleAsyncRepository));
+            _appointmentAsyncRepository = appointmentAsyncRepository ?? throw new ArgumentNullException(nameof(appointmentAsyncRepository));
+            _deptAsyncRepository = deptAsyncRepository ?? throw new ArgumentNullException(nameof(deptAsyncRepository));
+            _userDbContext = userDbContext ?? throw new ArgumentNullException(nameof(userDbContext));
         }
-
-
 
         public async Task<ResponseModel> InsertUsers(InsertUserCommand request)
         {
@@ -35,6 +30,20 @@ namespace User.Application.Services
                     response.IsSuccess = false;
                     response.Message = "Password and Confirm Password Didn't match.";
                     return response;
+                }
+                var data = _userDbContext.Users.Where(x => x.FirstName == request.FirstName && x.LastName == request.LastName).Select(y => y).ToList();
+                if (data.Count != 0)
+                {
+                    response.IsSuccess = false;
+                    response.Message = "This name is already registered";
+                    return response;
+                }
+                if (request.RoleId == null)
+                {
+                    response.IsSuccess = false;
+                    response.Message = "RoleId is required.";
+                    return response;
+
                 }
 
 
@@ -163,7 +172,7 @@ namespace User.Application.Services
                 var newInsertRole = await _roleAsyncRepository.AddAsync(userDataRoles);
                 if (newInsertRole == null)
                 {
-                    throw new Exception("User not found.");
+                    throw new Exception("Role not Inserted.");
                 }
                 response.IsSuccess = true;
                 response.Message = "Inserted Role Successfully.";
@@ -185,6 +194,35 @@ namespace User.Application.Services
 
             try
             {
+                //    Role Data = null;
+                //    if (request.Id == 0)           
+                //    {
+                //        Data = new();
+                //    }
+                //    else
+                //    {
+                //        Data = await _roleAsyncRepository.GetByIdAsync(request.Id);
+                //    }
+
+                //    Data.RoleName = request.RoleName;
+
+                //    if (request.Id == 0)
+                //    {
+                //        Data.CreatedDate = DateTime.UtcNow;
+                //        await _roleAsyncRepository.AddAsync(Data);
+                //        response.IsSuccess = true;
+                //        response.Response = Data;
+                //        response.Message = "Role Created.";
+                //    }
+                //    else
+                //    {
+                //        Data.LastModifiedDate = DateTime.UtcNow;
+                //        await _roleAsyncRepository.UpdateAsync(Data);
+                //        response.IsSuccess = true;
+                //        response.Response = Data;
+                //        response.Message = "Role Updated.";
+                //    }
+                //}
 
                 var UserRoleToUpdate = await _roleAsyncRepository.GetByIdAsync(request.Id);
 
@@ -224,14 +262,16 @@ namespace User.Application.Services
                 response.Response = UserList;
                 response.IsSuccess = true;
                 response.Message = "Success";
-                return response;
+
             }
 
             catch (Exception ex)
             {
-                throw new Exception(ex.Message);
+                response.IsSuccess = false;
+                response.Message = ex.Message;
 
             }
+            return response;
         }
 
         public async Task<ResponseModel> DeleteRoles(DeleteRoleCommand request)
@@ -239,6 +279,7 @@ namespace User.Application.Services
             ResponseModel response = new();
             try
             {
+
                 var RolesToDelete = await _roleAsyncRepository.GetByIdAsync(request.Id);
                 if (RolesToDelete == null)
                 {
@@ -255,8 +296,274 @@ namespace User.Application.Services
                 response.Message = ex.Message;
             }
             return response;
+
         }
+
+        public async Task<ResponseModel> InsertAppointment(InsertAppointmentCommand request)
+        {
+            ResponseModel response = new();
+            try
+            {
+                var data = _userDbContext.Appointments.Where(x => x.FirstName == request.FirstName && x.LastName == request.LastName).Select(y => y).ToList();
+                if (data.Count != 0)
+                {
+                    response.IsSuccess = false;
+                    response.Message = "This name is already registered";
+                    return response;
+                }
+                Appointment appointmentData = new Appointment();
+
+
+                {
+                    appointmentData.FirstName = request.FirstName;
+                    appointmentData.LastName = request.LastName;
+                    appointmentData.DOB = request.DOB;
+                    appointmentData.Gender = request.Gender;
+                    appointmentData.Height = request.Height;
+                    appointmentData.Weight = request.Weight;
+                    appointmentData.EMailId = request.EMailId;
+                    appointmentData.ContactNo = request.ContactNo;
+                    appointmentData.DepartmentId = request.DepartmentId;
+                    appointmentData.AssignDoctor = request.AssignDoctorId;
+                    appointmentData.AppointmentDate = request.AppointmentDate;
+                    appointmentData.AppointmentTime = request.AppointmentTime;
+
+                }
+                var InsertedAppointment = await _appointmentAsyncRepository.AddAsync(appointmentData);
+                if (InsertedAppointment == null)
+                {
+                    throw new Exception("User not Inserted.");
+
+                }
+                response.IsSuccess = true;
+                response.Message = "Inserted Role Successfully.";
+                response.Response = InsertedAppointment;
+            }
+            catch (Exception ex)
+            {
+
+                response.IsSuccess = false;
+                response.Message = ex.Message;
+            }
+            return response;
+        }
+
+        public async Task<ResponseModel> UpdateAppointment(UpdateAppointmentCommand request)
+        {
+            ResponseModel response = new();
+            try
+            {
+                var appointmentUpdated = await _appointmentAsyncRepository.GetByIdAsync(request.Id);
+                appointmentUpdated.FirstName = request.FirstName;
+                appointmentUpdated.LastName = request.LastName;
+                appointmentUpdated.DOB = request.DOB;
+                appointmentUpdated.Gender = request.Gender;
+                appointmentUpdated.Height = request.Height;
+                appointmentUpdated.Weight = request.Weight;
+                appointmentUpdated.EMailId = request.EMailId;
+                appointmentUpdated.ContactNo = request.ContactNo;
+                appointmentUpdated.DepartmentId = request.DepartmentId;
+                appointmentUpdated.AssignDoctor = request.AssignDoctorId;
+                appointmentUpdated.AppointmentDate = request.AppointmentDate;
+                appointmentUpdated.AppointmentTime = request.AppointmentTime;
+
+                await _appointmentAsyncRepository.UpdateAsync(appointmentUpdated);
+
+                if (appointmentUpdated == null)
+                {
+                    throw new Exception("User not Updated.");
+                }
+                response.IsSuccess = true;
+                response.Message = "User Role Updated Successfully.";
+                response.Response = appointmentUpdated;
+            }
+            catch (Exception ex)
+            {
+                response.IsSuccess = false;
+                response.Message = ex.Message;
+            }
+            return response;
+        }
+
+        public async Task<ResponseModel> DeleteAppointment(DeleteAppointmentCommand request)
+        {
+            ResponseModel response = new();
+            try
+            {
+                var AppointmentToDelete = await _appointmentAsyncRepository.GetByIdAsync(request.Id);
+                if (AppointmentToDelete == null)
+                {
+                    throw new Exception("Failed to Delete");
+                }
+                await _appointmentAsyncRepository.DeleteAsync(AppointmentToDelete);
+                response.IsSuccess = true;
+                response.Message = "User Deleted Successfully.";
+                response.Response = AppointmentToDelete;
+            }
+            catch (Exception ex)
+            {
+                response.IsSuccess = false;
+                response.Message = ex.Message;
+            }
+            return response;
+        }
+
+        public async Task<ResponseModel> GetAppointment(GetAppointmentListQuerry request)
+        {
+            ResponseModel response = new ResponseModel();
+            try
+            {
+                var AppointmentList = await _appointmentAsyncRepository.GetByIdAsync(request.Id);
+
+                if (AppointmentList == null)
+                {
+                    throw new Exception("No record Found");
+                }
+                response.Response = AppointmentList;
+                response.IsSuccess = true;
+                response.Message = "Success";
+
+
+            }
+            catch (Exception ex)
+            {
+
+                response.IsSuccess = false;
+                response.Message = ex.Message;
+            }
+            return response;
+        }
+
+        public async Task<ResponseModel> InsertDepartment(InsertDepartmentCommand request)
+        {
+            ResponseModel response = new ResponseModel();
+            try
+            {
+
+
+                var data = _userDbContext.Departments.Where(x => x.DepartmentName == request.DepartmentName).Select(y => y).ToList();
+                if (data.Count != 0)
+                {
+                    response.IsSuccess = false;
+                    response.Message = "This Department is already registered";
+                    return response;
+                }
+
+                Department deptInsert = new()
+                {
+                    DepartmentName = request.DepartmentName
+                };
+
+                var newInsertDept = await _deptAsyncRepository.AddAsync(deptInsert);
+                if (newInsertDept == null)
+                {
+                    throw new Exception("Department not Inserted.");
+                }
+                response.IsSuccess = true;
+                response.Message = "Department Inserted Successfully.";
+                response.Response = newInsertDept;
+            }
+            catch (Exception ex)
+            {
+
+                response.IsSuccess = false;
+                response.Message = ex.Message;
+            }
+            return response;
+
+        }
+
+        public async Task<ResponseModel> UpdateDepartment(UpdateDepartmentCommand request)
+        {
+            ResponseModel response = new();
+
+            try
+            {
+                var data = _userDbContext.Departments.Where(x => x.DepartmentName == request.DepartmentName).Select(y => y).ToList();
+                if (data.Count != 0)
+                {
+                    response.IsSuccess = false;
+                    response.Message = "This Department is already registered";
+                    return response;
+                }
+
+
+                var DeptToUpdate = await _deptAsyncRepository.GetByIdAsync(request.Id);
+
+                DeptToUpdate.DepartmentName = request.DepartmentName;
+
+                await _deptAsyncRepository.UpdateAsync(DeptToUpdate);
+
+                if (DeptToUpdate == null)
+                {
+                    throw new Exception("dept not updated.");
+                }
+                response.IsSuccess = true;
+                response.Message = "Dept Updated Successfully.";
+                response.Response = DeptToUpdate;
+            }
+            catch (Exception ex)
+            {
+                response.IsSuccess = false;
+                response.Message = ex.Message;
+            }
+            return response;
+
+        }
+
+
+        public async Task<ResponseModel> DeleteDepartment(DeleteDepartmentCommand request)
+        {
+            ResponseModel response = new();
+            try
+            {
+                var DeptToDelete = await _deptAsyncRepository.GetByIdAsync(request.Id);
+                if (DeptToDelete == null)
+                {
+                    throw new Exception("Failed to Delete");
+                }
+                await _deptAsyncRepository.DeleteAsync(DeptToDelete);
+                response.IsSuccess = true;
+                response.Message = "Department Deleted Successfully.";
+                response.Response = DeptToDelete;
+            }
+            catch (Exception ex)
+            {
+                response.IsSuccess = false;
+                response.Message = ex.Message;
+            }
+            return response;
+        }
+
+        public async Task<ResponseModel> GetDoctorList(GetDrDropdownlistQuerry request)
+        {
+            ResponseModel response = new ResponseModel();
+            try
+            {
+
+                var querry = @"exec[dbo].[sp_getDoctorDropDownList] @Page='" + request.Page + "'," +
+                                                                    "@GetAll = '" + request.GetAll + "'," +
+                                                                    "@PageSize = '" + request.PageSize + "'";
+
+                var data = await _userDbContext.doctorDropdownVms.FromSqlRaw(querry)!.ToListAsync();
+                //return data.ToList();
+                response.Response = data.ToList();
+                response.IsSuccess = true;
+                return response;
+            }
+            catch (Exception ex)
+            {
+                response.IsSuccess = false;
+                response.Message = ex.Message;
+            }
+            return response;
+
+        }
+
+
+
     }
+
 }
 
 

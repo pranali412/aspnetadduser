@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Controllers\AppointmentController.cs~RF1fb09c.TMP" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.9" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer.Design" Version="1.1.6" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.9">
@@ -20,7 +24,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\User.Application\User.Application.csproj" />
-    <ProjectReference Include="..\User.Infrastructure\User.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

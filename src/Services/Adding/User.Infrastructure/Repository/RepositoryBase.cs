@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
-using User.Application.Contracts.Persistence;
 using User.Domain.Common;
 using User.Infrastructure.Persistence;
 
@@ -8,9 +7,9 @@ namespace User.Infrastructure.Repository
 {
     public class RepositoryBase<T> : IAsyncRepository<T> where T : EntityBase
     {
-        protected readonly UserDbContext _dbContext;
+        protected readonly ASPUserDbContext _dbContext;
 
-        public RepositoryBase(UserDbContext dbContext)
+        public RepositoryBase(ASPUserDbContext dbContext)
         {
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         }

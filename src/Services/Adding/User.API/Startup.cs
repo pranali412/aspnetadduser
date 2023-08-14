@@ -22,7 +22,7 @@ namespace User.API
             services.AddApplicationServices();
             services.AddInfrastructureServices(Configuration);
 
-            services.AddDbContext<UserDbContext>();
+            services.AddDbContext<ASPUserDbContext>();
             services.AddMediatR(typeof(Startup).GetTypeInfo().Assembly);
 
             services.AddControllers();

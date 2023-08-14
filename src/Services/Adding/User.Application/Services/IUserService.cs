@@ -1,13 +1,4 @@
-﻿using User.Application.Features.Users.Command.DeleteRole;
-using User.Application.Features.Users.Command.DeleteUser;
-using User.Application.Features.Users.Command.InserRole;
-using User.Application.Features.Users.Command.InsertUser;
-using User.Application.Features.Users.Command.UpdateRole;
-using User.Application.Features.Users.Command.UpdateUser;
-using User.Application.Features.Users.Queries.GetUserList;
-using User.Domain.ViewModel;
-
-namespace User.Application.Services
+﻿namespace User.Application.Services
 {
     public interface IUserService
     {
@@ -24,5 +15,23 @@ namespace User.Application.Services
         Task<ResponseModel> UpdateRoles(UpdateRoleCommand request);
 
         Task<ResponseModel> DeleteRoles(DeleteRoleCommand request);
+
+        Task<ResponseModel> InsertAppointment(InsertAppointmentCommand request);
+
+        Task<ResponseModel> UpdateAppointment(UpdateAppointmentCommand request);
+
+        Task<ResponseModel> DeleteAppointment(DeleteAppointmentCommand request);
+
+        Task<ResponseModel> GetAppointment(GetAppointmentListQuerry request);
+
+        Task<ResponseModel> InsertDepartment(InsertDepartmentCommand request);
+
+        Task<ResponseModel> UpdateDepartment(UpdateDepartmentCommand request);
+
+        Task<ResponseModel> DeleteDepartment(DeleteDepartmentCommand request);
+
+        Task<ResponseModel> GetDoctorList(GetDrDropdownlistQuerry request);
+        // Task<ResponseModel> GetDoctorList();
+
     }
 }

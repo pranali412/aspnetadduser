@@ -23,6 +23,8 @@ namespace User.Domain.Entities
         public string RoleId { get; set; }
 
 
+
+
     }
 
 }

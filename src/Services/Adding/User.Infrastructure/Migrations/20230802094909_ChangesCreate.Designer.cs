@@ -11,7 +11,7 @@ using User.Infrastructure.Persistence;
 
 namespace User.Infrastructure.Migrations
 {
-    [DbContext(typeof(UserDbContext))]
+    [DbContext(typeof(ASPUserDbContext))]
     [Migration("20230802094909_ChangesCreate")]
     partial class ChangesCreate
     {

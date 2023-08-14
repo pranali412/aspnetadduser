@@ -7,7 +7,6 @@ namespace User.Application.Features.Users.Command.UpdateRole
     {
         public string RoleName { get; set; }
 
-
         public int Id { get; set; }
 
     }
